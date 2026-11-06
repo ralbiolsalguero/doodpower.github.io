@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Disponibilidad del claustro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one column; cabecera, datos del docente, cuadrícula 5 días × medias horas, barra de envío fija abajo. */
+:root{
+  --bg:#f4f7f8; --surface:#ffffff; --fg:#14212b; --muted:#5b6b77; --line:#d7e0e5;
+  --accent:#16708a; --accent-fg:#ffffff; --mine:#e8a33d; --ok:#2f8a57; --warn:#b4542e;
+  --display:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f171d; --surface:#16222a; --fg:#e4ecf0; --muted:#93a5b1; --line:#2a3a45;
+  --accent:#3fa6c4; --accent-fg:#06141a; --mine:#f0b357; --ok:#5cc289; --warn:#e88b62; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f171d; --surface:#16222a; --fg:#e4ecf0; --muted:#93a5b1; --line:#2a3a45;
+  --accent:#3fa6c4; --accent-fg:#06141a; --mine:#f0b357; --ok:#5cc289; --warn:#e88b62; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:28px 120px}
+.wrap{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+header{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,5vw,38px);line-height:1.1;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:700;font-size:19px;margin:0}
+.lede{color:var(--muted);margin:0;max-width:62ch}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.fields{grid-template-columns:1fr}}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;min-width:0}
+label small{font-weight:400;color:var(--muted)}
+input,select{font:inherit;font-size:15px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;min-width:0;width:100%}
+input:focus-visible,select:focus-visible,button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[aria-invalid="true"]{border-color:var(--warn)}
+.hint{font-size:14px;color:var(--muted);margin:0}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.ghost{font:inherit;font-weight:700;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:7px 12px;cursor:pointer}
+.gridbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;overflow-x:auto}
+.grid{display:grid;grid-template-columns:52px repeat(5,minmax(52px,1fr));gap:3px;min-width:320px;user-select:none;-webkit-user-select:none}
+.dh{position:sticky;top:0;background:var(--surface);z-index:2;text-align:center;padding:6px 2px 8px;font-family:var(--display)}
+.dh b{display:block;font-size:13px;font-weight:700}
+.dh span{font-family:var(--mono);font-size:18px;font-weight:600}
+.tl{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right;padding-right:6px;line-height:26px;font-variant-numeric:tabular-nums}
+.tl.half{color:transparent}
+.cell{height:26px;border-radius:5px;border:1px solid var(--line);background:var(--bg);cursor:pointer;padding:0;touch-action:manipulation}
+.cell.hour{border-top-color:color-mix(in oklab,var(--line),var(--fg) 25%)}
+.cell[aria-pressed="true"]{background:var(--mine);border-color:var(--mine)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:13px;color:var(--muted);margin-top:10px}
+.sw{display:inline-block;width:18px;height:12px;border-radius:3px;border:1px solid var(--line);vertical-align:middle;margin-right:4px}
+.sw.on{background:var(--mine);border-color:var(--mine)}
+.sendbar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:12px calc(12px + env(safe-area-inset-bottom,0px))}
+.sendbar .in{max-width:880px;margin:0 auto;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.count{font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums}
+.count b{font-size:18px}
+.primary{font:inherit;font-family:var(--display);font-weight:700;font-size:16px;border:0;background:var(--accent);color:var(--accent-fg);border-radius:10px;padding:11px 22px;cursor:pointer}
+.primary[disabled]{opacity:.55;cursor:default}
+.msg{font-size:14px;margin:0;color:var(--warn)}
+.msg[hidden]{display:none}
+.done{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.done .big{font-family:var(--display);font-size:clamp(22px,4vw,30px);font-weight:800;margin:0;text-wrap:balance}
+.done .check{width:44px;height:44px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:700}
+.setup{border:1px dashed var(--warn);color:var(--warn);background:transparent;border-radius:10px;padding:12px 14px;font-size:14px}
+code{font-family:var(--mono);font-size:13px}
+@media (prefers-reduced-motion:no-preference){.cell{transition:background-color .12s}}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app">
+  <header>
+    <div class="eyebrow">thePower FP · Claustro</div>
+    <h1>¿Qué medias horas tienes libres del 23 al 27 de noviembre?</h1>
+    <p class="lede">Marca todas las franjas de 30 minutos en las que podrías asistir a una reunión y pulsa «Enviar». Tu respuesta es individual: nadie más la ve. Si cambias de opinión, vuelve a enviar con el mismo nombre y se sustituye la anterior.</p>
+  </header>
+
+  <div id="setup-notice" class="setup" hidden>
+    Falta configurar el destino de las respuestas: abre <code>index.html</code> y pon la URL del script en la constante <code>ENDPOINT</code>. Mientras tanto, el botón «Enviar» no funciona.
+  </div>
+
+  <form id="form" class="panel" novalidate>
+    <h2>Tus datos</h2>
+    <div class="fields">
+      <label>Nombre<input id="nombre" name="nombre" type="text" autocomplete="given-name" required maxlength="60"></label>
+      <label>Apellidos<input id="apellidos" name="apellidos" type="text" autocomplete="family-name" required maxlength="80"></label>
+    </div>
+  </form>
+
+  <div class="bar">
+    <p class="hint">Toca una franja para marcarla. Con ratón, puedes arrastrar para marcar varias seguidas.</p>
+    <button class="ghost" id="clear" type="button">Borrar todo</button>
+  </div>
+
+  <div class="gridbox">
+    <div class="grid" id="grid" role="grid" aria-label="Franjas de media hora, lunes 23 a viernes 27 de noviembre"></div>
+    <div class="legend"><span><i class="sw"></i>No puedo</span><span><i class="sw on"></i>Puedo</span></div>
+  </div>
+</div>
+
+<div class="wrap" id="done" hidden>
+  <div class="panel done">
+    <div class="check">✓</div>
+    <p class="big" id="done-title">Gracias, hemos registrado tu disponibilidad.</p>
+    <p class="hint" id="done-text"></p>
+    <button class="ghost" id="again" type="button">Cambiar mi respuesta</button>
+  </div>
+</div>
+
+<div class="sendbar" id="sendbar">
+  <div class="in">
+    <div>
+      <div class="count"><b id="n">0</b> franjas marcadas</div>
+      <p class="msg" id="msg" hidden></p>
+    </div>
+    <button class="primary" id="send" type="button">Enviar</button>
+  </div>
+</div>
+
+<script>
+// ── CONFIGURACIÓN ─────────────────────────────────────────────────────────
+// Pega aquí la URL de la aplicación web de Apps Script (acaba en /exec).
+const ENDPOINT = "";
+// ──────────────────────────────────────────────────────────────────────────
+
+(function(){
+  const DAYS=[{d:23,n:"lunes"},{d:24,n:"martes"},{d:25,n:"miércoles"},{d:26,n:"jueves"},{d:27,n:"viernes"}];
+  const START=8*60, END=21*60; // 08:00–21:00
+  const TIMES=[]; for(let m=START;m<END;m+=30) TIMES.push(m);
+  const fmt=m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+  const key=(di,m)=>"2026-11-"+DAYS[di].d+"T"+fmt(m);
+  const $=id=>document.getElementById(id);
+  const grid=$("grid"), cells=new Map(), mine=new Set();
+  const DRAFT="claustro-nov23-draft";
+
+  if(!ENDPOINT) $("setup-notice").hidden=false;
+
+  // Cuadrícula
+  grid.appendChild(document.createElement("div"));
+  DAYS.forEach(x=>{const h=document.createElement("div");h.className="dh";
+    const b=document.createElement("b");b.textContent=x.n.slice(0,3)+".";const s=document.createElement("span");s.textContent=x.d;h.append(b,s);grid.appendChild(h)});
+  TIMES.forEach(m=>{
+    const tl=document.createElement("div");tl.className="tl"+(m%60?" half":"");tl.textContent=fmt(m);grid.appendChild(tl);
+    DAYS.forEach((x,di)=>{const b=document.createElement("button");b.type="button";b.className="cell"+(m%60?"":" hour");
+      const k=key(di,m);b.dataset.k=k;b.setAttribute("aria-label",x.n+" "+x.d+", "+fmt(m)+" a "+fmt(m+30));b.setAttribute("aria-pressed","false");
+      cells.set(k,b);grid.appendChild(b)});
+  });
+
+  function paint(k){ cells.get(k).setAttribute("aria-pressed",mine.has(k)?"true":"false"); }
+  function set(k,v){ if(mine.has(k)===v) return; v?mine.add(k):mine.delete(k); paint(k); refresh(); }
+  function refresh(){ $("n").textContent=mine.size; saveDraft(); }
+
+  let painting=false, paintVal=true;
+  grid.addEventListener("pointerdown",e=>{ const c=e.target.closest(".cell"); if(!c) return;
+    paintVal=!mine.has(c.dataset.k); set(c.dataset.k,paintVal); if(e.pointerType==="mouse"){painting=true;e.preventDefault();} });
+  grid.addEventListener("pointerover",e=>{ if(!painting) return; const c=e.target.closest(".cell"); if(c) set(c.dataset.k,paintVal); });
+  window.addEventListener("pointerup",()=>{painting=false});
+  grid.addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("cell")){e.preventDefault();set(e.target.dataset.k,!mine.has(e.target.dataset.k));}});
+  $("clear").addEventListener("click",()=>{ mine.forEach(k=>{mine.delete(k);paint(k)}); refresh(); });
+
+  // Borrador local por si se recarga la página (solo en este navegador)
+  function saveDraft(){ try{ localStorage.setItem(DRAFT,JSON.stringify({n:$("nombre").value,a:$("apellidos").value,s:[...mine]})); }catch(e){} }
+  (function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT)||"null"); if(!d) return;
+    $("nombre").value=d.n||""; $("apellidos").value=d.a||""; (d.s||[]).forEach(k=>{ if(cells.has(k)){mine.add(k);paint(k);} }); $("n").textContent=mine.size; }catch(e){} })();
+  ["nombre","apellidos"].forEach(id=>$(id).addEventListener("input",saveDraft));
+
+  function showMsg(t){ const m=$("msg"); m.hidden=!t; m.textContent=t||""; }
+
+  async function send(){
+    const nombre=$("nombre").value.trim(), apellidos=$("apellidos").value.trim();
+    $("nombre").setAttribute("aria-invalid",!nombre); $("apellidos").setAttribute("aria-invalid",!apellidos);
+    if(!nombre||!apellidos){ showMsg("Escribe tu nombre y apellidos."); (nombre?$("apellidos"):$("nombre")).focus(); return; }
+    if(!mine.size){ showMsg("Marca al menos una franja. Si no tienes ninguna libre, marca la menos mala y coméntaselo a dirección."); return; }
+    if(!ENDPOINT){ showMsg("Esta encuesta aún no está conectada a la hoja de respuestas."); return; }
+    showMsg(""); const btn=$("send"); btn.disabled=true; btn.textContent="Enviando…";
+    const payload={nombre,apellidos,slots:[...mine].sort(),enviado:new Date().toISOString(),ua:navigator.userAgent.slice(0,120)};
+    let ok=false, confirmed=false;
+    try{
+      const r=await fetch(ENDPOINT,{method:"POST",body:JSON.stringify(payload)}); // text/plain → sin preflight, Apps Script lo acepta
+      if(r.ok){ try{ const j=await r.json(); ok=j&&j.ok!==false; confirmed=true; }catch(e){ ok=true; } }
+    }catch(e){
+      try{ await fetch(ENDPOINT,{method:"POST",mode:"no-cors",body:JSON.stringify(payload)}); ok=true; }catch(e2){}
+    }
+    btn.disabled=false; btn.textContent="Enviar";
+    if(!ok){ showMsg("No se pudo enviar. Comprueba la conexión e inténtalo de nuevo."); return; }
+    $("done-text").textContent=nombre+", hemos guardado "+mine.size+" franjas"+(confirmed?".":" (el servidor no devolvió confirmación, pero el envío salió).")+" Puedes cerrar esta página.";
+    $("app").hidden=true; $("sendbar").hidden=true; $("done").hidden=false; window.scrollTo(0,0);
+  }
+  $("send").addEventListener("click",send);
+  $("form").addEventListener("submit",e=>{e.preventDefault();send();});
+  $("again").addEventListener("click",()=>{ $("done").hidden=true; $("app").hidden=false; $("sendbar").hidden=false; });
+})();
+</script>
+</body>
+</html>
